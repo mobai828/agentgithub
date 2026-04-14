@@ -433,7 +433,19 @@ def create_agent_graph():
 
         web_search_processor = WebSearchProcessorAgent(config)
 
-        processed_response = web_search_processor.process_web_search_results(query=state["current_input"], chat_history=recent_context, language=state.get("language", "en"))
+        # Extract text from input (handle case where input is a dict containing an image)
+        current_input = state["current_input"]
+        query_text = ""
+        if isinstance(current_input, str):
+            query_text = current_input
+        elif isinstance(current_input, dict):
+            query_text = current_input.get("text", "")
+            
+        # If no text was provided but an image was, use a fallback query or just use the image context
+        if not query_text and isinstance(current_input, dict) and "image" in current_input:
+            query_text = "What information can you find about this medical image?"
+
+        processed_response = web_search_processor.process_web_search_results(query=query_text, chat_history=recent_context, language=state.get("language", "en"))
 
         # print("######### DEBUG WEB SEARCH:", processed_response)
         

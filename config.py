@@ -169,7 +169,7 @@ class Config:
         self.validation = ValidationConfig()
         self.ui = UIConfig()
         self.eleven_labs_api_key = os.getenv("ELEVEN_LABS_API_KEY")
-        self.tavily_api_key = os.getenv("TAVILY_API_KEY")
+        self.tavily_api_key = "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"
         self.max_conversation_history = 20  # Include last 20 messsages (10 Q&A pairs) in history
 
 # # Example usage

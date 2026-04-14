@@ -2,6 +2,7 @@ import os
 import time
 import logging
 from typing import List, Optional, Dict, Any
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from .doc_parser import MedicalDocParser
 from .content_processor import ContentProcessor
@@ -106,39 +107,33 @@ class MedicalRAG:
     
     def ingest_file(self, document_path: str) -> Dict[str, Any]:
         """
-        Ingest a single file into the RAG system.
-        
-        Args:
-            document_path: Path to the file to ingest
-            
-        Returns:
-            Dictionary with ingestion results
+        Ingest a single file into the RAG system using lightweight parser.
         """
         start_time = time.time()
         self.logger.info(f"Ingesting file: {document_path}")
 
         try:
             # Step 1: Parse document
-            self.logger.info("1. Parsing document and extracting images...")
+            self.logger.info("1. Parsing document with lightweight loader...")
             parsed_document, images = self.doc_parser.parse_document(document_path, self.parsed_content_dir)
-            self.logger.info(f"   Parsed document and extracted {len(images)} images")
+            self.logger.info("   Document parsed.")
 
-            # Step 2: Summarize images
-            self.logger.info("2. Summarizing images...")
-            image_summaries = self.content_processor.summarize_images(images)
-            self.logger.info(f"   Generated {len(image_summaries)} image summaries")
+            # Step 2: Format document (no image summaries needed in lightweight mode)
+            formatted_document = str(parsed_document)
 
-            # Step 3: Format document with image summaries
-            self.logger.info("3. Formatting document with image summaries...")
-            formatted_document = self.content_processor.format_document_with_images(parsed_document, image_summaries)
-
-            # Step 4: Chunk document into semantic sections
-            self.logger.info("4. Chunking document into semantic sections...")
-            document_chunks = self.content_processor.chunk_document(formatted_document)
+            # Step 3: Chunk document into semantic sections
+            self.logger.info("3. Chunking document...")
+            text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=1000,
+                chunk_overlap=200,
+                length_function=len,
+                is_separator_regex=False,
+            )
+            document_chunks = text_splitter.split_text(formatted_document)
             self.logger.info(f"   Document split into {len(document_chunks)} chunks")
 
-            # Step 5: Create vector store and document store
-            self.logger.info("5. Creating vector store knowledge base...")
+            # Step 4: Create vector store and document store
+            self.logger.info("4. Creating vector store knowledge base...")
             self.vector_store.create_vectorstore(
                 document_chunks=document_chunks, 
                 document_path=document_path

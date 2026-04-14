@@ -75,27 +75,14 @@ class ContentProcessor:
         Format the parsed document by replacing image placeholders with image summaries.
         
         Args:
-            parsed_document: Parsed document from doc_parser
+            parsed_document: Parsed document text
             image_summaries: List of image summaries
             
         Returns:
             Formatted document text with image summaries
         """
-        IMAGE_PLACEHOLDER = "<!-- image_placeholder -->"
-        PAGE_BREAK_PLACEHOLDER = "<!-- page_break -->"
-        
-        formatted_parsed_document = parsed_document.export_to_markdown(
-            page_break_placeholder=PAGE_BREAK_PLACEHOLDER, 
-            image_placeholder=IMAGE_PLACEHOLDER
-        )
-        
-        formatted_document = self._replace_occurrences(
-            formatted_parsed_document, 
-            IMAGE_PLACEHOLDER, 
-            image_summaries
-        )
-        
-        return formatted_document
+        # For lightweight mode, parsed_document is already a string and has no images
+        return str(parsed_document)
     
     def _replace_occurrences(self, text: str, target: str, replacements: List[str]) -> str:
         """

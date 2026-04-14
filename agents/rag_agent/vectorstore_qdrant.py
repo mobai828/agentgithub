@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
 
 from langchain_core.documents import Document
-from langchain.storage import InMemoryStore, LocalFileStore
+from langchain_core.stores import InMemoryStore
 from langchain_qdrant import FastEmbedSparse, QdrantVectorStore, RetrievalMode
 from qdrant_client import QdrantClient, models
 from qdrant_client.http.models import Distance, SparseVectorParams, VectorParams, OptimizersConfigDiff
@@ -27,8 +27,13 @@ class VectorStore:
         self.docstore_local_path = config.rag.doc_local_path
 
         # Use the singleton client instead of creating a new one
-        # self.client = QdrantClientManager.get_client(config)
-        self.client = QdrantClient(path=self.vectorstore_local_path)
+        if config.rag.use_local:
+            self.client = QdrantClient(path=self.vectorstore_local_path)
+        else:
+            self.client = QdrantClient(
+                url=config.rag.url,
+                api_key=config.rag.api_key
+            )
 
     def _does_collection_exist(self) -> bool:
         """Check if the collection already exists in Qdrant."""
@@ -55,7 +60,7 @@ class VectorStore:
             self.logger.error(f"Error creating collection: {e}")
             raise e
             
-    def load_vectorstore(self) -> Tuple[QdrantVectorStore, LocalFileStore]:
+    def load_vectorstore(self) -> Tuple[QdrantVectorStore, InMemoryStore]:
         """
         Load existing vectorstore and docstore for retrieval operations without ingesting new documents.
         
@@ -82,7 +87,7 @@ class VectorStore:
         )
         
         # Document storage
-        docstore = LocalFileStore(self.docstore_local_path)
+        docstore = InMemoryStore()
         
         self.logger.info(f"Successfully loaded existing vectorstore and docstore")
         return qdrant_vectorstore, docstore
@@ -91,7 +96,7 @@ class VectorStore:
             self,
             document_chunks: List[str],
             document_path: str,
-        ) -> Tuple[QdrantVectorStore, LocalFileStore, List[str]]:
+        ) -> Tuple[QdrantVectorStore, InMemoryStore, List[str]]:
         """
         Create a vector store from document chunks or upsert documents to existing store.
         
@@ -144,7 +149,7 @@ class VectorStore:
         )
         
         # Document storage for parent documents
-        docstore = LocalFileStore(self.docstore_local_path)
+        docstore = InMemoryStore()
         
         # Ingest documents into vector and doc stores
         qdrant_vectorstore.add_documents(documents=langchain_documents, ids=doc_ids)
@@ -157,7 +162,7 @@ class VectorStore:
             self,
             query: str,
             vectorstore: QdrantVectorStore,
-            docstore: LocalFileStore,
+            docstore: InMemoryStore,
         ) -> Tuple[List[Dict[str, Any]], List[str]]:
         """
         Retrieve relevant chunks based on a query.
@@ -181,9 +186,7 @@ class VectorStore:
         # picture_reference_paths = []
         
         for chunk, score in results:
-            # Get full document from doc store as bytes and decode to string
-            doc_content_bytes = docstore.mget([chunk.metadata['doc_id']])[0]
-            doc_content = doc_content_bytes.decode('utf-8')
+            doc_content = chunk.page_content
             
             # Add metadata to the document
             # formatted_doc = f"{doc_content}\nFollowing are the 'filename' and 'path as uri' of the source document for the current chunk: {chunk.metadata['source']}, {chunk.metadata['source_path']}"

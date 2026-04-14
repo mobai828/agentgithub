@@ -94,6 +94,7 @@ class AgentState(MessagesState):
     retrieval_confidence: float  # Confidence in retrieval (for RAG agent)
     bypass_routing: bool  # Flag to bypass agent routing for guardrails
     insufficient_info: bool  # Flag indicating RAG response has insufficient information
+    language: str # The requested response language (e.g. 'en', 'zh')
 
 
 class AgentDecision(TypedDict):
@@ -306,6 +307,10 @@ def create_agent_graph():
         **User:** "I have a headache and fever. What should I do?"
         **You:** "I'm not a doctor, but headaches and fever can have various causes, from infections to dehydration. If your symptoms persist, you should see a medical professional."
 
+        **CRITICAL REQUIREMENT:** 
+        You MUST respond entirely in the language corresponding to this language code: '{state.get("language", "en")}'.
+        For example, if the code is 'zh', you must reply in simplified Chinese. If it is 'en', reply in English.
+        
         Conversational LLM Response:"""
 
         # print("Conversation Prompt:", conversation_prompt)
@@ -343,7 +348,7 @@ def create_agent_graph():
                 # print("######### DEBUG 2:", msg)
                 recent_context += f"Assistant: {msg.content}\n"
 
-        response = rag_agent.process_query(query, chat_history=recent_context)
+        response = rag_agent.process_query(query, chat_history=recent_context, language=state.get("language", "en"))
         retrieval_confidence = response.get("confidence", 0.0)  # Default to 0.0 if not provided
 
         print(f"Retrieval Confidence: {retrieval_confidence}")
@@ -417,7 +422,7 @@ def create_agent_graph():
 
         web_search_processor = WebSearchProcessorAgent(config)
 
-        processed_response = web_search_processor.process_web_search_results(query=state["current_input"], chat_history=recent_context)
+        processed_response = web_search_processor.process_web_search_results(query=state["current_input"], chat_history=recent_context, language=state.get("language", "en"))
 
         # print("######### DEBUG WEB SEARCH:", processed_response)
         
@@ -474,11 +479,20 @@ def create_agent_graph():
         predicted_class = AgentConfig.image_analyzer.classify_chest_xray(image_path)
 
         if predicted_class == "covid19":
-            response = AIMessage(content="The analysis of the uploaded chest X-ray image indicates a **POSITIVE** result for **COVID-19**.")
+            response_text = "The analysis of the uploaded chest X-ray image indicates a **POSITIVE** result for **COVID-19**."
+            if state.get("language", "en") == "zh":
+                response_text = "对上传的胸部X光图像分析表明，**COVID-19（新冠肺炎）** 结果为 **阳性**。"
+            response = AIMessage(content=response_text)
         elif predicted_class == "normal":
-            response = AIMessage(content="The analysis of the uploaded chest X-ray image indicates a **NEGATIVE** result for **COVID-19**, i.e., **NORMAL**.")
+            response_text = "The analysis of the uploaded chest X-ray image indicates a **NEGATIVE** result for **COVID-19**, i.e., **NORMAL**."
+            if state.get("language", "en") == "zh":
+                response_text = "对上传的胸部X光图像分析表明，**COVID-19（新冠肺炎）** 结果为 **阴性**，即 **正常**。"
+            response = AIMessage(content=response_text)
         else:
-            response = AIMessage(content="The uploaded image is not clear enough to make a diagnosis / the image is not a medical image.")
+            response_text = "The uploaded image is not clear enough to make a diagnosis / the image is not a medical image."
+            if state.get("language", "en") == "zh":
+                response_text = "上传的图像不够清晰，无法进行诊断 / 该图像不是医学图像。"
+            response = AIMessage(content=response_text)
 
         # response = AIMessage(content="This would be handled by the chest X-ray agent, analyzing the image.")
 
@@ -501,9 +515,15 @@ def create_agent_graph():
         predicted_mask = AgentConfig.image_analyzer.segment_skin_lesion(image_path)
 
         if predicted_mask:
-            response = AIMessage(content="Following is the analyzed **segmented** output of the uploaded skin lesion image:")
+            response_text = "Following is the analyzed **segmented** output of the uploaded skin lesion image:"
+            if state.get("language", "en") == "zh":
+                response_text = "以下是上传的皮肤病变图像经过 **分割** 分析后的结果："
+            response = AIMessage(content=response_text)
         else:
-            response = AIMessage(content="The uploaded image is not clear enough to make a diagnosis / the image is not a medical image.")
+            response_text = "The uploaded image is not clear enough to make a diagnosis / the image is not a medical image."
+            if state.get("language", "en") == "zh":
+                response_text = "上传的图像不够清晰，无法进行诊断 / 该图像不是医学图像。"
+            response = AIMessage(content=response_text)
 
         # response = AIMessage(content="This would be handled by the skin lesion agent, analyzing the skin image.")
 
@@ -526,6 +546,8 @@ def create_agent_graph():
 
         # Append validation request to the existing output
         validation_prompt = f"{state['output'].content}\n\n**Human Validation Required:**\n- If you're a healthcare professional: Please validate the output. Select **Yes** or **No**. If No, provide comments.\n- If you're a patient: Simply click Yes to confirm."
+        if state.get("language", "en") == "zh":
+            validation_prompt = f"{state['output'].content}\n\n**需要人工验证：**\n- 如果您是医疗专业人员：请验证结果。选择 **是** 或 **否**。如果选否，请提供意见。\n- 如果您是患者：直接点击“是”以确认。"
 
         # Create an AI message with the validation prompt
         validation_message = AIMessage(content=validation_prompt)
@@ -549,7 +571,7 @@ def create_agent_graph():
         output_text = output if isinstance(output, str) else output.content
         
         # If the last message was a human validation message
-        if "Human Validation Required" in output_text:
+        if "Human Validation Required" in output_text or "需要人工验证" in output_text:
             # Check if the current input is a human validation response
             validation_input = ""
             if isinstance(current_input, str):
@@ -563,8 +585,11 @@ def create_agent_graph():
                 validation_response = HumanMessage(content=f"Validation Result: {validation_input}")
                 
                 # If validation is 'No', modify the output
-                if validation_input.lower().startswith('no'):
-                    fallback_message = AIMessage(content="The previous medical analysis requires further review. A healthcare professional has flagged potential inaccuracies.")
+                if validation_input.lower().startswith('no') or validation_input.lower().startswith('否'):
+                    fallback_message_text = "The previous medical analysis requires further review. A healthcare professional has flagged potential inaccuracies."
+                    if state.get("language", "en") == "zh":
+                        fallback_message_text = "之前的医学分析需要进一步审查。医疗专业人员已标记潜在的不准确之处。"
+                    fallback_message = AIMessage(content=fallback_message_text)
                     return {
                         **state,
                         "messages": [validation_response, fallback_message],
@@ -680,18 +705,19 @@ def init_agent_state() -> AgentState:
         "needs_human_validation": False,
         "retrieval_confidence": 0.0,
         "bypass_routing": False,
-        "insufficient_info": False
+        "insufficient_info": False,
+        "language": "en"
     }
 
 
-def process_query(query: Union[str, Dict], conversation_history: List[BaseMessage] = None) -> str:
+def process_query(query: Union[str, Dict], conversation_history: List[BaseMessage] = None, language: str = "en") -> str:
     """
     Process a user query through the agent decision system.
     
     Args:
         query: User input (text string or dict with text and image)
         conversation_history: Optional list of previous messages, NOT NEEDED ANYMORE since the state saves the conversation history now
-        
+        language: The requested response language (e.g. 'en', 'zh')
     Returns:
         Response from the appropriate agent
     """
@@ -706,6 +732,7 @@ def process_query(query: Union[str, Dict], conversation_history: List[BaseMessag
     
     # Initialize state
     state = init_agent_state()
+    state["language"] = language
     # if conversation_history:
     #     state["messages"] = conversation_history
     

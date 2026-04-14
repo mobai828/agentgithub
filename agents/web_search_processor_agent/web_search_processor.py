@@ -45,7 +45,7 @@ class WebSearchProcessor:
 
         return prompt
     
-    def process_web_results(self, query: str, chat_history: Optional[List[Dict[str, str]]] = None) -> str:
+    def process_web_results(self, query: str, chat_history: Optional[List[Dict[str, str]]] = None, language: str = "en") -> str:
         """
         Fetches web search results, processes them using LLM, and returns a user-friendly response.
         """
@@ -65,6 +65,8 @@ class WebSearchProcessor:
             "You are an AI assistant specialized in medical information. Below are web search results "
             "retrieved for a user query. Summarize and generate a helpful, concise response. "
             "Use reliable sources only and ensure medical accuracy.\n\n"
+            f"**CRITICAL REQUIREMENT:** You MUST respond entirely in the language corresponding to this language code: '{language}'. "
+            f"For example, if the code is 'zh', you must reply in simplified Chinese. If it is 'en', reply in English.\n\n"
             f"Query: {query}\n\nWeb Search Results:\n{web_results}\n\nResponse:"
         )
         

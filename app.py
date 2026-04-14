@@ -76,6 +76,7 @@ cleanup_thread.start()
 class QueryRequest(BaseModel):
     query: str
     conversation_history: List = []
+    language: str = "en"
 
 class SpeechRequest(BaseModel):
     text: str
@@ -103,7 +104,7 @@ def chat(
         session_id = str(uuid.uuid4())
     
     try:
-        response_data = process_query(request.query)
+        response_data = process_query(request.query, language=request.language)
         response_text = response_data['messages'][-1].content
         
         # Set session cookie
@@ -133,6 +134,7 @@ async def upload_image(
     response: Response,
     image: UploadFile = File(...), 
     text: str = Form(""),
+    language: str = Form("en"),
     session_id: Optional[str] = Cookie(None)
 ):
     """Process medical image uploads with optional text input."""
@@ -171,7 +173,7 @@ async def upload_image(
     
     try:
         query = {"text": text, "image": file_path}
-        response_data = process_query(query)
+        response_data = process_query(query, language=language)
         response_text = response_data['messages'][-1].content
 
         # Set session cookie
@@ -207,6 +209,7 @@ def validate_medical_output(
     response: Response,
     validation_result: str = Form(...), 
     comments: Optional[str] = Form(None),
+    language: str = Form("en"),
     session_id: Optional[str] = Cookie(None)
 ):
     """Handle human validation for medical AI outputs."""
@@ -223,7 +226,7 @@ def validate_medical_output(
         if comments:
             validation_query += f" Comments: {comments}"
         
-        response_data = process_query(validation_query)
+        response_data = process_query(validation_query, language=language)
 
         if validation_result.lower() == 'yes':
             return {

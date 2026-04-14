@@ -21,7 +21,8 @@ class ResponseGenerator:
             self,
             query: str, 
             context: str,
-            chat_history: Optional[List[Dict[str, str]]] = None
+            chat_history: Optional[List[Dict[str, str]]] = None,
+            language: str = "en"
         ) -> str:
         """
         Build the prompt for the language model.
@@ -82,6 +83,10 @@ class ResponseGenerator:
 
         Do not provide any source link that is not present in the context. Do not make up any source link.
 
+        **CRITICAL REQUIREMENT:** 
+        You MUST respond entirely in the language corresponding to this language code: '{language}'.
+        For example, if the code is 'zh', you must reply in simplified Chinese. If it is 'en', reply in English.
+
         Medical Assistant Response:"""
 
         return prompt
@@ -92,6 +97,7 @@ class ResponseGenerator:
             retrieved_docs: List[Dict[str, Any]],
             picture_paths: List[str],
             chat_history: Optional[List[Dict[str, str]]] = None,
+            language: str = "en"
         ) -> Dict[str, Any]:
         """
         Generate a response based on retrieved documents.
@@ -113,7 +119,7 @@ class ResponseGenerator:
             context = "\n\n===DOCUMENT SECTION===\n\n".join(doc_texts)
             
             # Build the prompt
-            prompt = self._build_prompt(query, context, chat_history)
+            prompt = self._build_prompt(query, context, chat_history, language=language)
             
             # Generate response
             response = self.response_generator_model.invoke(prompt)
@@ -126,7 +132,8 @@ class ResponseGenerator:
 
             # Add sources to response
             if hasattr(self, 'include_sources') and self.include_sources:
-                response_with_source = response.content + "\n\n##### Source documents:"
+                source_title_str = "\n\n##### Source documents:" if language == "en" else "\n\n##### 参考文档:"
+                response_with_source = response.content + source_title_str
                 for current_source in sources:
                     source_path = current_source['path']
                     source_title = current_source['title']
@@ -135,7 +142,8 @@ class ResponseGenerator:
                 response_with_source = response.content
             
             # Add picture paths to response
-            response_with_source_and_picture_paths = response_with_source + "\n\n##### Reference images:"
+            image_title_str = "\n\n##### Reference images:" if language == "en" else "\n\n##### 参考图片:"
+            response_with_source_and_picture_paths = response_with_source + image_title_str
             for picture_path in picture_paths:
                 response_with_source_and_picture_paths += f"\n- [{picture_path.split('/')[-1]}]({picture_path})"
             

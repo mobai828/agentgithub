@@ -277,16 +277,19 @@
             <!-- Chat Container -->
             <div class="col-md-9">
                 <div class="chat-container">
-                    <div class="chat-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-stethoscope me-2"></i>
-                            Multi-Agent Medical Assistant
-                        </h5>
-                        <small class="text-muted">Upload medical images or ask health-related questions</small>
+                    <div class="chat-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0" id="header-title">
+                                <i class="fas fa-stethoscope me-2"></i>
+                                Multi-Agent Medical Assistant
+                            </h5>
+                            <small class="text-muted" id="header-subtitle">Upload medical images or ask health-related questions</small>
+                        </div>
+                        <button id="lang-toggle-btn" class="btn btn-outline-secondary btn-sm">中 / EN</button>
                     </div>
                     
                     <div id="chat-body" class="chat-body">
-                        <div class="message assistant-message">
+                        <div class="message assistant-message" id="initial-system-msg">
                             <div class="agent-tag">System</div>
                             <p>Hello! I'm your medical assistant. You can ask me health-related questions or upload medical images for analysis.</p>
                         </div>
@@ -958,6 +961,108 @@
         let currentAudio = null;  // Store a single audio instance
         let selectedVoiceId = '21m00Tcm4TlvDq8ikWAM'; // Default voice ID (Rachel)
 
+        let currentLanguage = localStorage.getItem('language') || 'en';
+
+        const translations = {
+            'en': {
+                'sidebarTitle': 'Medical Assistant',
+                'availAgents': 'Available Agents',
+                'medConvAgent': 'Medical Conversation Agent',
+                'medRagAgent': 'Medical RAG Agent',
+                'webSearchAgent': 'Web Search Agent',
+                'cvAgents': 'Computer Vision Agents',
+                'brainTumor': 'Brain Tumor Detection',
+                'chestXray': 'Chest X-ray Covid-19 Classification',
+                'skinLesion': 'Skin Lesion Segmentation',
+                'clearConv': 'Clear Conversation',
+                'headerTitle': 'Multi-Agent Medical Assistant',
+                'headerSubtitle': 'Upload medical images or ask health-related questions',
+                'systemMsg': 'Hello! I\'m your medical assistant. You can ask me health-related questions or upload medical images for analysis.',
+                'inputPlaceholder': 'Ask a medical question...',
+                'playVoice': 'Play Voice Response',
+                'humanValReq': '⚠️ Human Validation Required: Do you agree with this result?',
+                'valYes': '✔ Yes',
+                'valNo': '✖ No',
+                'valComments': 'Add comments (optional)',
+                'origImage': 'Original Image',
+                'segResult': 'Segmentation Result',
+                'sysError': 'Sorry, there was an error processing your request. Please try again.',
+                'procVoice': 'Processing voice input...',
+                'failTranscribe': 'Failed to transcribe speech. Please try again or type your message.',
+                'procVal': '⏳ Processing validation...',
+                'humanVal': 'HUMAN_VALIDATED'
+            },
+            'zh': {
+                'sidebarTitle': '医疗助手',
+                'availAgents': '可用智能体',
+                'medConvAgent': '医疗对话智能体',
+                'medRagAgent': '医疗知识检索智能体 (RAG)',
+                'webSearchAgent': '网络搜索智能体',
+                'cvAgents': '计算机视觉智能体',
+                'brainTumor': '脑肿瘤检测',
+                'chestXray': '胸部X光新冠肺炎分类',
+                'skinLesion': '皮肤病变分割',
+                'clearConv': '清空对话',
+                'headerTitle': '多智能体医疗助手',
+                'headerSubtitle': '上传医学图像或询问健康相关问题',
+                'systemMsg': '你好！我是你的医疗助手。你可以问我健康相关的问题，或者上传医学图像进行分析。',
+                'inputPlaceholder': '询问医学问题...',
+                'playVoice': '播放语音回复',
+                'humanValReq': '⚠️ 需要人工验证：您同意这个结果吗？',
+                'valYes': '✔ 是',
+                'valNo': '✖ 否',
+                'valComments': '添加评论 (可选)',
+                'origImage': '原图',
+                'segResult': '分割结果',
+                'sysError': '抱歉，处理您的请求时出错，请重试。',
+                'procVoice': '正在处理语音输入...',
+                'failTranscribe': '语音转写失败。请重试或输入您的消息。',
+                'procVal': '⏳ 正在处理验证...',
+                'humanVal': '已人工验证'
+            }
+        };
+
+        function updateUIForLanguage() {
+            const t = translations[currentLanguage];
+            
+            // Sidebar
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.querySelector('h5').innerHTML = `<i class="fas fa-robot me-2"></i>${t.sidebarTitle}`;
+                const headings = sidebar.querySelectorAll('h6');
+                if (headings.length > 0) headings[0].innerText = t.availAgents;
+                if (headings.length > 1) headings[1].innerText = t.cvAgents;
+                
+                const listItems = sidebar.querySelectorAll('li');
+                if (listItems.length >= 6) {
+                    listItems[0].innerHTML = `<i class="fas fa-comment-medical me-2"></i> ${t.medConvAgent}`;
+                    listItems[1].innerHTML = `<i class="fas fa-database me-2"></i> ${t.medRagAgent}`;
+                    listItems[2].innerHTML = `<i class="fas fa-search me-2"></i> ${t.webSearchAgent}`;
+                    listItems[3].innerHTML = `<i class="fas fa-brain me-2"></i> ${t.brainTumor}`;
+                    listItems[4].innerHTML = `<i class="fas fa-lungs me-2"></i> ${t.chestXray}`;
+                    listItems[5].innerHTML = `<i class="fas fa-allergies me-2"></i> ${t.skinLesion}`;
+                }
+            }
+            
+            document.getElementById('clear-chat').innerHTML = `<i class="fas fa-trash me-2"></i> ${t.clearConv}`;
+            
+            // Header
+            document.getElementById('header-title').innerHTML = `<i class="fas fa-stethoscope me-2"></i>${t.headerTitle}`;
+            document.getElementById('header-subtitle').innerText = t.headerSubtitle;
+            
+            // Input
+            document.getElementById('message-input').placeholder = t.inputPlaceholder;
+            
+            // Initial system message (if exists)
+            const initialMsg = document.getElementById('initial-system-msg');
+            if (initialMsg) {
+                initialMsg.querySelector('p').innerText = t.systemMsg;
+            }
+            
+            // Update button text
+            document.getElementById('lang-toggle-btn').innerText = currentLanguage === 'en' ? '中 / EN' : 'EN / 中';
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const chatBody = document.getElementById('chat-body');
             const chatForm = document.getElementById('chat-form');
@@ -966,7 +1071,15 @@
             const previewContainer = document.getElementById('preview-container');
             const previewImage = document.getElementById('preview-image');
             const removeImageBtn = document.getElementById('remove-image');
-            const clearChatBtn = document.getElementById('clear-chat');
+            const langToggleBtn = document.getElementById('lang-toggle-btn');
+            langToggleBtn.addEventListener('click', () => {
+                currentLanguage = currentLanguage === 'en' ? 'zh' : 'en';
+                localStorage.setItem('language', currentLanguage);
+                updateUIForLanguage();
+            });
+
+            // Initialize UI text
+            updateUIForLanguage();
 
             // Add voice recording button to the UI
             const fileUploadContainer = document.querySelector('.file-upload-container');
@@ -1022,12 +1135,13 @@
             });
             
             // Clear chat (only visual)
+            const clearChatBtn = document.getElementById('clear-chat');
             clearChatBtn.addEventListener('click', function() {
                 displayMessages = [];
                 chatBody.innerHTML = `
-                    <div class="message assistant-message">
+                    <div class="message assistant-message" id="initial-system-msg">
                         <div class="agent-tag">System</div>
-                        <p>Hello! I'm your medical assistant. You can ask me health-related questions or upload medical images for analysis.</p>
+                        <p>${translations[currentLanguage].systemMsg}</p>
                     </div>
                 `;
             });
@@ -1089,6 +1203,7 @@
                         const formData = new FormData();
                         formData.append('text', message);
                         formData.append('image', imageUpload.files[0]);
+                        formData.append('language', currentLanguage);
                         
                         // Send to backend using the /upload endpoint
                         response = await fetch('/upload', {
@@ -1105,7 +1220,8 @@
                             },
                             body: JSON.stringify({
                                 query: message,
-                                conversation_history: [] // You might want to maintain this if needed
+                                conversation_history: [], // You might want to maintain this if needed
+                                language: currentLanguage
                             }),
                             credentials: 'include' // Important for cookie handling
                         });
@@ -1125,11 +1241,11 @@
                     
                     // Build HTML content for the response with audio controls
                     let assistantHtml = `
-                        <div class="agent-tag">${data.agent}</div>
+                        <div class="agent-tag">${data.agent === "HUMAN_VALIDATED" ? translations[currentLanguage].humanVal : data.agent}</div>
                         <div>${marked.parse(data.response)}</div>
                         <div class="audio-controls mt-2">
                             <button class="btn btn-sm btn-outline-primary play-tts-btn">
-                                <i class="fas fa-play"></i> Play Voice Response
+                                <i class="fas fa-play"></i> ${translations[currentLanguage].playVoice}
                             </button>
                         </div>
                     `;
@@ -1138,10 +1254,10 @@
                     if (data.agent.includes("HUMAN_VALIDATION")) {
                         assistantHtml += `
                             <div class="mt-3 p-3 border rounded bg-light">
-                                <p><strong>⚠️ Human Validation Required:</strong> Do you agree with this result?</p>
-                                <button class="btn btn-success btn-sm validate-btn" data-validation="yes">✔ Yes</button>
-                                <button class="btn btn-danger btn-sm validate-btn" data-validation="no">✖ No</button>
-                                <textarea class="form-control mt-2 validation-comments" rows="2" placeholder="Add comments (optional)"></textarea>
+                                <p><strong>${translations[currentLanguage].humanValReq}</strong></p>
+                                <button class="btn btn-success btn-sm validate-btn" data-validation="yes">${translations[currentLanguage].valYes}</button>
+                                <button class="btn btn-danger btn-sm validate-btn" data-validation="no">${translations[currentLanguage].valNo}</button>
+                                <textarea class="form-control mt-2 validation-comments" rows="2" placeholder="${translations[currentLanguage].valComments}"></textarea>
                             </div>
                         `;
                     }
@@ -1155,11 +1271,11 @@
                                 <div class="image-side-by-side">
                                     <div class="image-container">
                                         <img src="${imageDataUrl}" alt="Original image" class="img-fluid rounded">
-                                        <div class="image-caption">Original Image</div>
+                                        <div class="image-caption">${translations[currentLanguage].origImage}</div>
                                     </div>
                                     <div class="image-container">
                                         <img src="${data.result_image}" alt="Segmented image" class="img-fluid rounded">
-                                        <div class="image-caption">Segmentation Result</div>
+                                        <div class="image-caption">${translations[currentLanguage].segResult}</div>
                                     </div>
                                 </div>
                             `;
@@ -1282,7 +1398,7 @@
                     errorElement.className = 'message assistant-message';
                     errorElement.innerHTML = `
                         <div class="agent-tag">System</div>
-                        <p class="text-danger">Sorry, there was an error processing your request. Please try again.</p>
+                        <p class="text-danger">${translations[currentLanguage].sysError}</p>
                     `;
                     chatBody.appendChild(errorElement);
                 }
@@ -1359,7 +1475,7 @@
             // Create a temporary element to display processing status
             const statusElement = document.createElement('div');
             statusElement.className = 'alert alert-info mt-2';
-            statusElement.innerHTML = 'Processing voice input...';
+            statusElement.innerHTML = translations[currentLanguage].procVoice;
             document.querySelector('.chat-footer').prepend(statusElement);
             
             // Use server-side transcription for recorded audio
@@ -1382,7 +1498,7 @@
             .catch(error => {
                 console.error('Transcription error:', error);
                 statusElement.className = 'alert alert-danger mt-2';
-                statusElement.innerHTML = 'Failed to transcribe speech. Please try again or type your message.';
+                statusElement.innerHTML = translations[currentLanguage].failTranscribe;
             })
             .finally(() => {
                 // Clean up
@@ -1427,12 +1543,13 @@
                 // Create and display a waiting element
                 const waitingEl = document.createElement('div');
                 waitingEl.className = 'alert alert-info mt-2';
-                waitingEl.innerHTML = '⏳ Processing validation...';
+                waitingEl.innerHTML = translations[currentLanguage].procVal;
                 document.getElementById("chat-body").appendChild(waitingEl);
 
                 const formData = new FormData();
                 formData.append("validation_result", validation);
                 formData.append("comments", comments);
+                formData.append("language", currentLanguage);
 
                 const response = await fetch("/validate", {
                     method: "POST",

@@ -159,14 +159,14 @@ class MedicalRAG:
                 "processing_time": time.time() - start_time
             }
         
-    def process_query(self, query: str, chat_history: Optional[List[Dict[str, str]]] = None) -> Dict[str, Any]:
+    def process_query(self, query: str, chat_history: Optional[List[Dict[str, str]]] = None, language: str = "en") -> Dict[str, Any]:
         """
         Process a query with the RAG system.
         
         Args:
             query: The query string
             chat_history: Optional chat history for context
-            
+            language: language code, e.g. 'en', 'zh'
         Returns:
             Response dictionary
         """
@@ -211,7 +211,8 @@ class MedicalRAG:
                 query=query,
                 retrieved_docs=reranked_documents,
                 picture_paths=reranked_top_k_picture_paths,
-                chat_history=chat_history
+                chat_history=chat_history,
+                language=language
                 )
             
             # Add timing information

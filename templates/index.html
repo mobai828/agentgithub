@@ -1372,6 +1372,24 @@
                         formData.append('preferred_agent', currentSelectedAgent);
                         
                         // Send to backend using the /upload endpoint
+                
+                // --- ADDED: Automatically stop any playing audio when a new question is asked ---
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio.currentTime = 0;
+                    URL.revokeObjectURL(currentAudio.src);
+                    currentAudio = null;
+                    
+                    // Reset all play buttons in the UI
+                    document.querySelectorAll('.play-tts-btn').forEach(btn => {
+                        if (btn.classList.contains('btn-primary')) {
+                            btn.innerHTML = '<i class="fas fa-play"></i> ' + translations[currentLanguage].playVoice;
+                            btn.classList.remove('btn-primary');
+                            btn.classList.add('btn-outline-primary');
+                        }
+                    });
+                }
+                // --------------------------------------------------------------------------------
                         response = await fetch('/upload', {
                             method: 'POST',
                             body: formData,
@@ -1415,9 +1433,12 @@
                     let assistantHtml = `
                         <div class="agent-tag">${data.agent === "HUMAN_VALIDATED" ? translations[currentLanguage].humanVal : data.agent}</div>
                         <div>${marked.parse(data.response)}</div>
-                        <div class="audio-controls mt-2">
+                        <div class="audio-controls mt-2 d-flex align-items-center">
                             <button class="btn btn-sm btn-outline-primary play-tts-btn">
                                 <i class="fas fa-play"></i> ${translations[currentLanguage].playVoice}
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger stop-tts-btn d-none ms-2" title="Stop Audio">
+                                <i class="fas fa-stop"></i>
                             </button>
                         </div>
                     `;
@@ -1478,6 +1499,32 @@
                     
                     // Get the play button and add click event to speak text
                     const playButton = assistantMessageElement.querySelector('.play-tts-btn');
+                    const stopButton = assistantMessageElement.querySelector('.stop-tts-btn');
+
+                    // Reset all other buttons
+                    function resetAllAudioUI() {
+                        document.querySelectorAll('.play-tts-btn').forEach(btn => {
+                            if (btn.classList.contains('btn-primary')) {
+                                btn.innerHTML = '<i class="fas fa-play"></i> ' + translations[currentLanguage].playVoice;
+                                btn.classList.remove('btn-primary');
+                                btn.classList.add('btn-outline-primary');
+                            }
+                        });
+                        document.querySelectorAll('.stop-tts-btn').forEach(btn => {
+                            btn.classList.add('d-none');
+                        });
+                    }
+
+                    // Handle Stop Audio click
+                    stopButton.addEventListener('click', function() {
+                        if (currentAudio) {
+                            currentAudio.pause();
+                            currentAudio.currentTime = 0;
+                            URL.revokeObjectURL(currentAudio.src);
+                            currentAudio = null;
+                        }
+                        resetAllAudioUI();
+                    });
 
                     playButton.addEventListener('click', async function () {
                         // Get a reasonable amount of text to convert to speech (limit to 1000 chars to keep requests smaller)
@@ -1498,6 +1545,9 @@
                                 URL.revokeObjectURL(currentAudio.src);  // Free up memory
                                 currentAudio = null;  // Clear the reference
                             }
+                            
+                            // Reset all other buttons first
+                            resetAllAudioUI();
 
                             // Create a new audio element for the new speech
                             currentAudio = new Audio(audioUrl);
@@ -1507,6 +1557,7 @@
                                 this.innerHTML = '<i class="fas fa-pause"></i> Pause';
                                 this.classList.remove('btn-outline-primary');
                                 this.classList.add('btn-primary');
+                                stopButton.classList.remove('d-none');
                                 this.disabled = false;
                             };
 
@@ -1514,12 +1565,14 @@
                                 this.innerHTML = '<i class="fas fa-play"></i> Play';
                                 this.classList.remove('btn-primary');
                                 this.classList.add('btn-outline-primary');
+                                // We keep the stop button visible while paused
                             };
 
                             currentAudio.onended = () => {
                                 this.innerHTML = '<i class="fas fa-play"></i> Play Again';
                                 this.classList.remove('btn-primary');
                                 this.classList.add('btn-outline-primary');
+                                stopButton.classList.add('d-none');
                                 URL.revokeObjectURL(audioUrl);  // Free memory after playback
                                 currentAudio = null;  // Ensure reference is cleared
                             };

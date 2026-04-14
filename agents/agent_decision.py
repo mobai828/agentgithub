@@ -95,6 +95,7 @@ class AgentState(MessagesState):
     bypass_routing: bool  # Flag to bypass agent routing for guardrails
     insufficient_info: bool  # Flag indicating RAG response has insufficient information
     language: str # The requested response language (e.g. 'en', 'zh')
+    preferred_agent: str # Optional manual override from user
 
 
 class AgentDecision(TypedDict):
@@ -182,6 +183,16 @@ def create_agent_graph():
         current_input = state["current_input"]
         has_image = state["has_image"]
         image_type = state["image_type"]
+        preferred_agent = state.get("preferred_agent", "AUTO")
+        
+        # If the user explicitly selected an agent, bypass LLM routing
+        if preferred_agent and preferred_agent != "AUTO":
+            print(f"Bypassing LLM routing. User preferred agent: {preferred_agent}")
+            updated_state = {
+                **state,
+                "agent_name": preferred_agent,
+            }
+            return {"agent_state": updated_state, "next": preferred_agent}
         
         # Prepare input for decision model
         input_text = ""
@@ -706,11 +717,12 @@ def init_agent_state() -> AgentState:
         "retrieval_confidence": 0.0,
         "bypass_routing": False,
         "insufficient_info": False,
-        "language": "en"
+        "language": "en",
+        "preferred_agent": "AUTO"
     }
 
 
-def process_query(query: Union[str, Dict], conversation_history: List[BaseMessage] = None, language: str = "en") -> str:
+def process_query(query: Union[str, Dict], conversation_history: List[BaseMessage] = None, language: str = "en", preferred_agent: str = "AUTO") -> str:
     """
     Process a user query through the agent decision system.
     
@@ -718,6 +730,7 @@ def process_query(query: Union[str, Dict], conversation_history: List[BaseMessag
         query: User input (text string or dict with text and image)
         conversation_history: Optional list of previous messages, NOT NEEDED ANYMORE since the state saves the conversation history now
         language: The requested response language (e.g. 'en', 'zh')
+        preferred_agent: Optional manual override from user
     Returns:
         Response from the appropriate agent
     """
@@ -733,6 +746,7 @@ def process_query(query: Union[str, Dict], conversation_history: List[BaseMessag
     # Initialize state
     state = init_agent_state()
     state["language"] = language
+    state["preferred_agent"] = preferred_agent
     # if conversation_history:
     #     state["messages"] = conversation_history
     

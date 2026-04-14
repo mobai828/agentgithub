@@ -85,6 +85,7 @@ class QueryRequest(BaseModel):
     query: str
     conversation_history: List = []
     language: str = "en"
+    preferred_agent: str = "AUTO"
 
 class SpeechRequest(BaseModel):
     text: str
@@ -113,7 +114,7 @@ def chat(
         session_id = str(uuid.uuid4())
     
     try:
-        response_data = process_query(request.query, language=request.language)
+        response_data = process_query(request.query, language=request.language, preferred_agent=request.preferred_agent)
         response_text = response_data['messages'][-1].content
         
         # Set session cookie
@@ -144,6 +145,7 @@ async def upload_image(
     image: UploadFile = File(...), 
     text: str = Form(""),
     language: str = Form("en"),
+    preferred_agent: str = Form("AUTO"),
     session_id: Optional[str] = Cookie(None)
 ):
     """Process medical image uploads with optional text input."""
@@ -182,7 +184,7 @@ async def upload_image(
     
     try:
         query = {"text": text, "image": file_path}
-        response_data = process_query(query, language=language)
+        response_data = process_query(query, language=language, preferred_agent=preferred_agent)
         response_text = response_data['messages'][-1].content
 
         # Set session cookie

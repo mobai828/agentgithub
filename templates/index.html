@@ -13,6 +13,27 @@
             background-color: #f5f5f5;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+        
+        .agent-list li {
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        
+        .agent-list li:hover {
+            background-color: #e9ecef;
+        }
+        
+        .agent-list li.active-agent {
+            background-color: #e0f0ff;
+            border-color: #b8daff;
+            color: #0d6efd;
+            font-weight: 500;
+        }
+
         .chat-container {
             max-width: 1200px;
             margin: 0 auto;
@@ -225,18 +246,19 @@
                     </h5>
                     <div class="agent-info">
                         <h6>Available Agents</h6>
-                        <ul class="list-unstyled">
-                            <li><i class="fas fa-comment-medical me-2"></i> Medical Conversation Agent</li>
-                            <li><i class="fas fa-database me-2"></i> Medical RAG Agent</li>
-                            <li><i class="fas fa-search me-2"></i> Web Search Agent</li>
+                        <ul class="list-unstyled agent-list">
+                            <li class="active-agent" data-agent="AUTO"><i class="fas fa-robot me-2"></i> Auto-Route (Recommended)</li>
+                            <li data-agent="CONVERSATION_AGENT"><i class="fas fa-comment-medical me-2"></i> Medical Conversation Agent</li>
+                            <li data-agent="RAG_AGENT"><i class="fas fa-database me-2"></i> Medical RAG Agent</li>
+                            <li data-agent="WEB_SEARCH_PROCESSOR_AGENT"><i class="fas fa-search me-2"></i> Web Search Agent</li>
                         </ul>
                     </div>
                     <div class="agent-info">
                         <h6>Computer Vision Agents</h6>
-                        <ul class="list-unstyled">
-                            <li><i class="fas fa-brain me-2"></i> Brain Tumor Detection</li>
-                            <li><i class="fas fa-lungs me-2"></i> Chest X-ray Covid-19 Classification</li>
-                            <li><i class="fas fa-allergies me-2"></i> Skin Lesion Segmentation</li>
+                        <ul class="list-unstyled agent-list">
+                            <li data-agent="BRAIN_TUMOR_AGENT"><i class="fas fa-brain me-2"></i> Brain Tumor Detection</li>
+                            <li data-agent="CHEST_XRAY_AGENT"><i class="fas fa-lungs me-2"></i> Chest X-ray Covid-19 Classification</li>
+                            <li data-agent="SKIN_LESION_AGENT"><i class="fas fa-allergies me-2"></i> Skin Lesion Segmentation</li>
                         </ul>
                     </div>
                     <div class="agent-info">
@@ -968,6 +990,7 @@
                 'sidebarTitle': 'Medical Assistant',
                 'availAgents': 'Available Agents',
                 'agentCaps': 'Agent Capabilities',
+                'autoRoute': 'Auto-Route (Recommended)',
                 'medRagCap1': 'Docling based parsing',
                 'medRagCap2': 'Embedding text & tables',
                 'medRagCap3': 'LLM based semantic chunking',
@@ -1006,6 +1029,7 @@
                 'sidebarTitle': '医疗助手',
                 'availAgents': '可用智能体',
                 'agentCaps': '智能体能力',
+                'autoRoute': '自动路由 (推荐)',
                 'medRagCap1': '基于 Docling 的解析',
                 'medRagCap2': '文本表格嵌入',
                 'medRagCap3': '基于 LLM 的语义分块',
@@ -1060,14 +1084,15 @@
                     }
                 }
                 
-                const listItems = sidebar.querySelectorAll('li');
-                if (listItems.length >= 6) {
-                    listItems[0].innerHTML = `<i class="fas fa-comment-medical me-2"></i> ${t.medConvAgent}`;
-                    listItems[1].innerHTML = `<i class="fas fa-database me-2"></i> ${t.medRagAgent}`;
-                    listItems[2].innerHTML = `<i class="fas fa-search me-2"></i> ${t.webSearchAgent}`;
-                    listItems[3].innerHTML = `<i class="fas fa-brain me-2"></i> ${t.brainTumor}`;
-                    listItems[4].innerHTML = `<i class="fas fa-lungs me-2"></i> ${t.chestXray}`;
-                    listItems[5].innerHTML = `<i class="fas fa-allergies me-2"></i> ${t.skinLesion}`;
+                const listItems = sidebar.querySelectorAll('li[data-agent]');
+                if (listItems.length >= 7) {
+                    listItems[0].innerHTML = `<i class="fas fa-robot me-2"></i> ${t.autoRoute}`;
+                    listItems[1].innerHTML = `<i class="fas fa-comment-medical me-2"></i> ${t.medConvAgent}`;
+                    listItems[2].innerHTML = `<i class="fas fa-database me-2"></i> ${t.medRagAgent}`;
+                    listItems[3].innerHTML = `<i class="fas fa-search me-2"></i> ${t.webSearchAgent}`;
+                    listItems[4].innerHTML = `<i class="fas fa-brain me-2"></i> ${t.brainTumor}`;
+                    listItems[5].innerHTML = `<i class="fas fa-lungs me-2"></i> ${t.chestXray}`;
+                    listItems[6].innerHTML = `<i class="fas fa-allergies me-2"></i> ${t.skinLesion}`;
                 }
             }
             
@@ -1090,6 +1115,8 @@
             document.getElementById('lang-toggle-btn').innerText = currentLanguage === 'en' ? '中 / EN' : 'EN / 中';
         }
 
+        let currentSelectedAgent = 'AUTO';
+
         document.addEventListener('DOMContentLoaded', function() {
             const chatBody = document.getElementById('chat-body');
             const chatForm = document.getElementById('chat-form');
@@ -1107,6 +1134,20 @@
 
             // Initialize UI text
             updateUIForLanguage();
+
+            // Setup manual agent selection
+            const agentItems = document.querySelectorAll('.agent-list li[data-agent]');
+            agentItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Remove active class from all
+                    agentItems.forEach(el => el.classList.remove('active-agent'));
+                    // Add active class to clicked
+                    this.classList.add('active-agent');
+                    // Update selected agent variable
+                    currentSelectedAgent = this.getAttribute('data-agent');
+                    console.log("Selected Agent:", currentSelectedAgent);
+                });
+            });
 
             // Add voice recording button to the UI
             const fileUploadContainer = document.querySelector('.file-upload-container');
@@ -1231,6 +1272,7 @@
                         formData.append('text', message);
                         formData.append('image', imageUpload.files[0]);
                         formData.append('language', currentLanguage);
+                        formData.append('preferred_agent', currentSelectedAgent);
                         
                         // Send to backend using the /upload endpoint
                         response = await fetch('/upload', {
@@ -1248,10 +1290,16 @@
                             body: JSON.stringify({
                                 query: message,
                                 conversation_history: [], // You might want to maintain this if needed
-                                language: currentLanguage
+                                language: currentLanguage,
+                                preferred_agent: currentSelectedAgent
                             }),
                             credentials: 'include' // Important for cookie handling
                         });
+                    }
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(errorText || `Server returned ${response.status}`);
                     }
                     
                     const data = await response.json();
@@ -1418,7 +1466,9 @@
                 } catch (error) {
                     console.error("Error:", error);
                     // Remove thinking indicator
-                    chatBody.removeChild(thinkingElement);
+                    if (chatBody.contains(thinkingElement)) {
+                        chatBody.removeChild(thinkingElement);
+                    }
                     
                     // Add error message
                     const errorElement = document.createElement('div');
@@ -1426,6 +1476,7 @@
                     errorElement.innerHTML = `
                         <div class="agent-tag">System</div>
                         <p class="text-danger">${translations[currentLanguage].sysError}</p>
+                        <pre class="text-danger p-2 bg-light rounded mt-2" style="font-size: 0.8em; overflow-x: auto;">${error.message || String(error)}</pre>
                     `;
                     chatBody.appendChild(errorElement);
                 }

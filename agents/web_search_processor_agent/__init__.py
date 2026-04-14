@@ -1,5 +1,13 @@
 from typing import List, Dict, Any, Optional
 from .web_search_processor import WebSearchProcessor
+from config import Config
+
+# Initialize configuration
+config = Config()
+
+# Set the environment variable for Tavily API Key
+import os
+os.environ["TAVILY_API_KEY"] = config.web_search.tavily_api_key
 
 class WebSearchProcessorAgent:
     """

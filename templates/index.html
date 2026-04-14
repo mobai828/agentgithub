@@ -976,6 +976,44 @@
             
         //     return text;
         // }
+        // Toast notification system
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container') || createToastContainer();
+            
+            const toastId = 'toast-' + Date.now();
+            const bgClass = type === 'success' ? 'bg-success' : (type === 'danger' ? 'bg-danger' : 'bg-primary');
+            
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            toast.show();
+            
+            toastElement.addEventListener('hidden.bs.toast', function () {
+                toastElement.remove();
+            });
+        }
+        
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            container.style.zIndex = '1050';
+            document.body.appendChild(container);
+            return container;
+        }
+
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
@@ -1023,7 +1061,8 @@
                 'procVoice': 'Processing voice input...',
                 'failTranscribe': 'Failed to transcribe speech. Please try again or type your message.',
                 'procVal': '⏳ Processing validation...',
-                'humanVal': 'HUMAN_VALIDATED'
+                'humanVal': 'HUMAN_VALIDATED',
+                'agentChanged': 'Agent selected: '
             },
             'zh': {
                 'sidebarTitle': '医疗助手',
@@ -1062,7 +1101,8 @@
                 'procVoice': '正在处理语音输入...',
                 'failTranscribe': '语音转写失败。请重试或输入您的消息。',
                 'procVal': '⏳ 正在处理验证...',
-                'humanVal': '已人工验证'
+                'humanVal': '已人工验证',
+                'agentChanged': '已切换智能体：'
             }
         };
 
@@ -1145,6 +1185,10 @@
                     this.classList.add('active-agent');
                     // Update selected agent variable
                     currentSelectedAgent = this.getAttribute('data-agent');
+                    
+                    // Show toast notification
+                    const agentName = this.innerText.trim();
+                    showToast(translations[currentLanguage].agentChanged + agentName, 'success');
                     console.log("Selected Agent:", currentSelectedAgent);
                 });
             });

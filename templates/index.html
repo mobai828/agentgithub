@@ -967,6 +967,16 @@
             'en': {
                 'sidebarTitle': 'Medical Assistant',
                 'availAgents': 'Available Agents',
+                'agentCaps': 'Agent Capabilities',
+                'medRagCap1': 'Docling based parsing',
+                'medRagCap2': 'Embedding text & tables',
+                'medRagCap3': 'LLM based semantic chunking',
+                'medRagCap4': 'Preserving structural boundaries',
+                'webCap1': 'Real-time Tavily search',
+                'webCap2': 'Reliable medical sources',
+                'cvCap1': 'Lesion detection & classification',
+                'cvCap2': 'PyTorch based inference',
+                'cvCap3': 'Medical image processing',
                 'medConvAgent': 'Medical Conversation Agent',
                 'medRagAgent': 'Medical RAG Agent',
                 'webSearchAgent': 'Web Search Agent',
@@ -995,6 +1005,16 @@
             'zh': {
                 'sidebarTitle': '医疗助手',
                 'availAgents': '可用智能体',
+                'agentCaps': '智能体能力',
+                'medRagCap1': '基于 Docling 的解析',
+                'medRagCap2': '文本表格嵌入',
+                'medRagCap3': '基于 LLM 的语义分块',
+                'medRagCap4': '结构化边界保留',
+                'webCap1': '实时 Tavily 搜索',
+                'webCap2': '可靠医学来源筛选',
+                'cvCap1': '病灶检测与分类',
+                'cvCap2': '基于 PyTorch 的推理',
+                'cvCap3': '医学图像处理',
                 'medConvAgent': '医疗对话智能体',
                 'medRagAgent': '医疗知识检索智能体 (RAG)',
                 'webSearchAgent': '网络搜索智能体',
@@ -1032,6 +1052,13 @@
                 const headings = sidebar.querySelectorAll('h6');
                 if (headings.length > 0) headings[0].innerText = t.availAgents;
                 if (headings.length > 1) headings[1].innerText = t.cvAgents;
+                
+                const links = sidebar.querySelectorAll('a');
+                for (let i = 0; i < links.length; i++) {
+                    if (links[i].innerText.includes('Agent Capabilities') || links[i].innerText.includes('智能体能力')) {
+                        links[i].innerText = t.agentCaps;
+                    }
+                }
                 
                 const listItems = sidebar.querySelectorAll('li');
                 if (listItems.length >= 6) {

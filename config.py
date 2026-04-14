@@ -116,7 +116,7 @@ class MedicalCVConfig:
         self.skin_lesion_model_path = "./agents/image_analysis_agent/skin_lesion_agent/models/checkpointN25_.pth.tar"
         self.skin_lesion_segmentation_output_path = "./uploads/skin_lesion_output/segmentation_plot.png"
         self.llm = ChatOpenAI(
-            model="glm-4-flash",
+            model="glm-4v-flash",
             api_key=ZHIPU_API_KEY,
             base_url=ZHIPU_BASE_URL,
             temperature = 0.1  # Keep deterministic for classification tasks

@@ -17,7 +17,7 @@ import uvicorn
 import requests
 from werkzeug.utils import secure_filename
 from pydub import AudioSegment
-from elevenlabs.client import ElevenLabs
+from gtts import gTTS
 
 from config import Config
 from agents.agent_decision import process_query
@@ -44,11 +44,6 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Set up templates
 templates = Jinja2Templates(directory="templates")
-
-# Initialize ElevenLabs client
-client = ElevenLabs(
-    api_key=config.speech.eleven_labs_api_key,
-)
 
 # Define allowed file extensions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
@@ -81,6 +76,7 @@ class QueryRequest(BaseModel):
 class SpeechRequest(BaseModel):
     text: str
     voice_id: str = "EXAMPLE_VOICE_ID"  # Default voice ID
+    language: str = "en"
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -329,10 +325,10 @@ async def transcribe_audio(audio: UploadFile = File(...)):
 
 @app.post("/generate-speech")
 async def generate_speech(request: SpeechRequest):
-    """Endpoint to generate speech using ElevenLabs API"""
+    """Endpoint to generate speech using Google TTS (gTTS)"""
     try:
         text = request.text
-        selected_voice_id = request.voice_id
+        language = request.language
         
         if not text:
             return JSONResponse(
@@ -340,36 +336,16 @@ async def generate_speech(request: SpeechRequest):
                 content={"error": "Text is required"}
             )
         
-        # Define API request to ElevenLabs
-        elevenlabs_url = f"https://api.elevenlabs.io/v1/text-to-speech/{selected_voice_id}/stream"
-        headers = {
-            "Accept": "audio/mpeg",
-            "Content-Type": "application/json",
-            "xi-api-key": config.speech.eleven_labs_api_key
-        }
-        payload = {
-            "text": text,
-            "model_id": "eleven_monolingual_v1",
-            "voice_settings": {
-                "stability": 0.5,
-                "similarity_boost": 0.5
-            }
-        }
-
-        # Send request to ElevenLabs API
-        response = requests.post(elevenlabs_url, headers=headers, json=payload)
-
-        if response.status_code != 200:
-            return JSONResponse(
-                status_code=500,
-                content={"error": f"Failed to generate speech, status: {response.status_code}", "details": response.text}
-            )
+        # Determine language for gTTS
+        lang = 'zh-CN' if language == 'zh' else 'en'
+        
+        # Generate speech
+        tts = gTTS(text=text, lang=lang)
         
         # Save the audio file temporarily
         os.makedirs(SPEECH_DIR, exist_ok=True)
         temp_audio_path = f"./{SPEECH_DIR}/{uuid.uuid4()}.mp3"
-        with open(temp_audio_path, "wb") as f:
-            f.write(response.content)
+        tts.save(temp_audio_path)
 
         # Return the generated audio file
         return FileResponse(

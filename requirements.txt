@@ -273,4 +273,4 @@ XlsxWriter==3.2.2
 yarg==0.1.9
 yarl==1.18.3
 zipp==3.21.0
-zstandard==0.23.0
+zstandard==0.23.0gTTS==2.5.1

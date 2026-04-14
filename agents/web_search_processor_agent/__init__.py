@@ -7,7 +7,7 @@ config = Config()
 
 # Set the environment variable for Tavily API Key
 import os
-os.environ["TAVILY_API_KEY"] = config.web_search.tavily_api_key
+os.environ["TAVILY_API_KEY"] = "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"
 
 class WebSearchProcessorAgent:
     """

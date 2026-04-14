@@ -53,12 +53,12 @@ class RAGConfig:
         self.vector_db_type = "qdrant"
         self.embedding_dim = 2048  # embedding-3 default dimension is 2048
         self.distance_metric = "Cosine"  # Add this with a default value
-        self.use_local = True  # Add this with a default value
+        self.use_local = False  # Add this with a default value
         self.vector_local_path = "./data/qdrant_db"  # Add this with a default value
         self.doc_local_path = "./data/docs_db"
         self.parsed_content_dir = "./data/parsed_docs"
-        self.url = os.getenv("QDRANT_URL")
-        self.api_key = os.getenv("QDRANT_API_KEY")
+        self.url = "https://ca42b516-972f-4d16-8ee3-9d9431766498.us-west-2-0.aws.cloud.qdrant.io:6333"
+        self.api_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIiwic3ViamVjdCI6ImFwaS1rZXk6NjVjNmY0YjYtZDgwOS00OWE5LWJlZmQtZDUzM2ZhNTgyNWI5In0.-vBLt9If2t4F-iL4eagx3gwb7I7YjQPNuzyRDuwHH04"
         self.collection_name = "medical_assistance_rag"  # Ensure a valid name
         self.chunk_size = 512  # Modify based on documents and performance
         self.chunk_overlap = 50  # Modify based on documents and performance

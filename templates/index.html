@@ -1319,6 +1319,28 @@
                 const message = messageInput.value.trim();
                 if (!message && !imageUpload.files.length) return;
                 
+                // --- ADDED: Automatically stop any playing audio immediately when submitting ---
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio.currentTime = 0;
+                    URL.revokeObjectURL(currentAudio.src);
+                    currentAudio = null;
+                    
+                    // Reset all play buttons in the UI
+                    document.querySelectorAll('.play-tts-btn').forEach(btn => {
+                        if (btn.classList.contains('btn-primary')) {
+                            btn.innerHTML = '<i class="fas fa-play"></i> ' + translations[currentLanguage].playVoice;
+                            btn.classList.remove('btn-primary');
+                            btn.classList.add('btn-outline-primary');
+                        }
+                    });
+                    
+                    document.querySelectorAll('.stop-tts-btn').forEach(btn => {
+                        btn.classList.add('d-none');
+                    });
+                }
+                // --------------------------------------------------------------------------------
+                
                 // Store image data if available
                 let imageDataUrl = null;
                 if (imageUpload.files.length > 0) {
@@ -1372,24 +1394,6 @@
                         formData.append('preferred_agent', currentSelectedAgent);
                         
                         // Send to backend using the /upload endpoint
-                
-                // --- ADDED: Automatically stop any playing audio when a new question is asked ---
-                if (currentAudio) {
-                    currentAudio.pause();
-                    currentAudio.currentTime = 0;
-                    URL.revokeObjectURL(currentAudio.src);
-                    currentAudio = null;
-                    
-                    // Reset all play buttons in the UI
-                    document.querySelectorAll('.play-tts-btn').forEach(btn => {
-                        if (btn.classList.contains('btn-primary')) {
-                            btn.innerHTML = '<i class="fas fa-play"></i> ' + translations[currentLanguage].playVoice;
-                            btn.classList.remove('btn-primary');
-                            btn.classList.add('btn-outline-primary');
-                        }
-                    });
-                }
-                // --------------------------------------------------------------------------------
                         response = await fetch('/upload', {
                             method: 'POST',
                             body: formData,

@@ -17,8 +17,8 @@ import uvicorn
 import requests
 import json
 import base64
+import subprocess
 from werkzeug.utils import secure_filename
-from pydub import AudioSegment
 from gtts import gTTS
 
 from config import Config
@@ -94,7 +94,7 @@ class SpeechRequest(BaseModel):
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     """Serve the main HTML page"""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html")
 
 @app.get("/health")
 def health_check():
@@ -283,10 +283,14 @@ async def transcribe_audio(audio: UploadFile = File(...)):
         wav_path = f"./{SPEECH_DIR}/speech_{uuid.uuid4()}.wav"
         
         try:
-            # Use pydub to convert to 16kHz, mono, 16-bit wav
-            audio_segment = AudioSegment.from_file(temp_audio)
-            audio_segment = audio_segment.set_frame_rate(16000).set_channels(1).set_sample_width(2)
-            audio_segment.export(wav_path, format="wav")
+            # Use subprocess to call ffmpeg to convert to 16kHz, mono, 16-bit wav
+            subprocess.run([
+                "ffmpeg", "-y", "-i", temp_audio, 
+                "-acodec", "pcm_s16le", 
+                "-ac", "1", 
+                "-ar", "16000", 
+                wav_path
+            ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             
             with open(wav_path, "rb") as f:
                 speech_data = f.read()

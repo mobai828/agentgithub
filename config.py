@@ -126,6 +126,8 @@ class SpeechConfig:
     def __init__(self):
         self.eleven_labs_api_key = os.getenv("ELEVEN_LABS_API_KEY")  # Replace with your actual key
         self.eleven_labs_voice_id = "21m00Tcm4TlvDq8ikWAM"    # Default voice ID (Rachel)
+        self.baidu_api_key = "OSP8KQ8n1DN5cGYE0WDOqSTt"
+        self.baidu_secret_key = "31sK7hNGN9oZ8zWC739AA6prPuiU2KGH"
 
 class ValidationConfig:
     def __init__(self):

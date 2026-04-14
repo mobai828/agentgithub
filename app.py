@@ -15,6 +15,8 @@ from pydantic import BaseModel
 
 import uvicorn
 import requests
+import json
+import base64
 from werkzeug.utils import secure_filename
 from pydub import AudioSegment
 from gtts import gTTS
@@ -47,6 +49,17 @@ templates = Jinja2Templates(directory="templates")
 
 # Define allowed file extensions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+def get_baidu_access_token():
+    """Get Access Token for Baidu API"""
+    url = f"https://aip.baidubce.com/oauth/2.0/token?client_id={config.speech.baidu_api_key}&client_secret={config.speech.baidu_secret_key}&grant_type=client_credentials"
+    payload = json.dumps("", ensure_ascii=False)
+    headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+    response = requests.post(url, headers=headers, data=payload.encode("utf-8"))
+    return response.json().get("access_token")
 
 def allowed_file(filename):
     """Check if file has an allowed extension"""
@@ -242,7 +255,7 @@ def validate_medical_output(
 
 @app.post("/transcribe")
 async def transcribe_audio(audio: UploadFile = File(...)):
-    """Endpoint to transcribe speech using ElevenLabs API"""
+    """Endpoint to transcribe speech using Baidu ASR API"""
     if not audio.filename:
         return JSONResponse(
             status_code=400,
@@ -259,54 +272,72 @@ async def transcribe_audio(audio: UploadFile = File(...)):
         with open(temp_audio, "wb") as f:
             f.write(audio_content)
         
-        # Debug: Print file size to check if it's empty
         file_size = os.path.getsize(temp_audio)
-        print(f"Received audio file size: {file_size} bytes")
-        
         if file_size == 0:
             return JSONResponse(
                 status_code=400,
                 content={"error": "Received empty audio file"}
             )
         
-        # Convert to MP3
-        mp3_path = f"./{SPEECH_DIR}/speech_{uuid.uuid4()}.mp3"
+        # Convert to PCM (Baidu requires pcm, wav, amr, m4a, 16000Hz, 16bit, mono)
+        wav_path = f"./{SPEECH_DIR}/speech_{uuid.uuid4()}.wav"
         
         try:
-            # Use pydub with format detection
-            audio = AudioSegment.from_file(temp_audio)
-            audio.export(mp3_path, format="mp3")
+            # Use pydub to convert to 16kHz, mono, 16-bit wav
+            audio_segment = AudioSegment.from_file(temp_audio)
+            audio_segment = audio_segment.set_frame_rate(16000).set_channels(1).set_sample_width(2)
+            audio_segment.export(wav_path, format="wav")
             
-            # Debug: Print MP3 file size
-            mp3_size = os.path.getsize(mp3_path)
-            print(f"Converted MP3 file size: {mp3_size} bytes")
+            with open(wav_path, "rb") as f:
+                speech_data = f.read()
+                
+            length = len(speech_data)
+            if length == 0:
+                raise Exception("Converted audio is empty")
 
-            with open(mp3_path, "rb") as mp3_file:
-                audio_data = mp3_file.read()
-            print(f"Converted audio file into byte array successfully!")
+            speech_base64 = base64.b64encode(speech_data).decode('utf-8')
 
-            transcription = client.speech_to_text.convert(
-                file=audio_data,
-                model_id="scribe_v1",
-                tag_audio_events=True,
-                language_code="eng",
-                diarize=True,
-            )
+            # Call Baidu API
+            token = get_baidu_access_token()
+            if not token:
+                raise Exception("Failed to get Baidu access token")
+
+            url = f"https://vop.baidu.com/server_api?dev_pid=1537&cuid=medical_agent_user&token={token}"
+            
+            payload = json.dumps({
+                "format": "wav",
+                "rate": 16000,
+                "channel": 1,
+                "cuid": "medical_agent_user",
+                "token": token,
+                "speech": speech_base64,
+                "len": length
+            })
+            
+            headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+
+            response = requests.post(url, headers=headers, data=payload)
+            result = response.json()
             
             # Clean up temp files
             try:
                 os.remove(temp_audio)
-                os.remove(mp3_path)
-                print(f"Deleted temp files: {temp_audio}, {mp3_path}")
+                os.remove(wav_path)
             except Exception as e:
-                print(f"Could not delete file: {e}")
+                print(f"Could not delete temp files: {e}")
             
-            if transcription.text:
-                return {"transcript": transcription.text}
+            if result.get("err_no") == 0 and result.get("result"):
+                transcription = result["result"][0]
+                return {"transcript": transcription}
             else:
+                error_msg = result.get("err_msg", "Unknown API error")
+                print(f"Baidu API Error: {error_msg}, code: {result.get('err_no')}")
                 return JSONResponse(
                     status_code=500,
-                    content={"error": f"API error: {transcription}", "details": transcription.text}
+                    content={"error": f"API error: {error_msg}"}
                 )
 
         except Exception as e:

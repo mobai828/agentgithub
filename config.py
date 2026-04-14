@@ -23,7 +23,7 @@ ZHIPU_BASE_URL = "https://open.bigmodel.cn/api/paas/v4/"
 class AgentDecisoinConfig:
     def __init__(self):
         self.llm = ChatOpenAI(
-            model="glm-4",
+            model="glm-4-flash",
             api_key=ZHIPU_API_KEY,
             base_url=ZHIPU_BASE_URL,
             temperature = 0.1  # Deterministic
@@ -32,7 +32,7 @@ class AgentDecisoinConfig:
 class ConversationConfig:
     def __init__(self):
         self.llm = ChatOpenAI(
-            model="glm-4",
+            model="glm-4-flash",
             api_key=ZHIPU_API_KEY,
             base_url=ZHIPU_BASE_URL,
             temperature = 0.7  # Creative but factual
@@ -41,7 +41,7 @@ class ConversationConfig:
 class WebSearchConfig:
     def __init__(self):
         self.llm = ChatOpenAI(
-            model="glm-4",
+            model="glm-4-flash",
             api_key=ZHIPU_API_KEY,
             base_url=ZHIPU_BASE_URL,
             temperature = 0.3  # Slightly creative but factual
@@ -69,25 +69,25 @@ class RAGConfig:
             base_url=ZHIPU_BASE_URL
         )
         self.llm = ChatOpenAI(
-            model="glm-4",
+            model="glm-4-flash",
             api_key=ZHIPU_API_KEY,
             base_url=ZHIPU_BASE_URL,
             temperature = 0.3  # Slightly creative but factual
         )
         self.summarizer_model = ChatOpenAI(
-            model="glm-4",
+            model="glm-4-flash",
             api_key=ZHIPU_API_KEY,
             base_url=ZHIPU_BASE_URL,
             temperature = 0.5  # Slightly creative but factual
         )
         self.chunker_model = ChatOpenAI(
-            model="glm-4",
+            model="glm-4-flash",
             api_key=ZHIPU_API_KEY,
             base_url=ZHIPU_BASE_URL,
             temperature = 0.0  # factual
         )
         self.response_generator_model = ChatOpenAI(
-            model="glm-4",
+            model="glm-4-flash",
             api_key=ZHIPU_API_KEY,
             base_url=ZHIPU_BASE_URL,
             temperature = 0.3  # Slightly creative but factual
@@ -116,7 +116,7 @@ class MedicalCVConfig:
         self.skin_lesion_model_path = "./agents/image_analysis_agent/skin_lesion_agent/models/checkpointN25_.pth.tar"
         self.skin_lesion_segmentation_output_path = "./uploads/skin_lesion_output/segmentation_plot.png"
         self.llm = ChatOpenAI(
-            model="glm-4",
+            model="glm-4-flash",
             api_key=ZHIPU_API_KEY,
             base_url=ZHIPU_BASE_URL,
             temperature = 0.1  # Keep deterministic for classification tasks

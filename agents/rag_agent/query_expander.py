@@ -32,17 +32,5 @@ class QueryExpander:
     
     def _generate_expansions(self, query: str) -> str:
         """Use LLM to expand query with medical terminology."""
-        prompt = f"""
-        As a medical expert, expand the following query with relevant medical terminology, 
-        synonyms, and related concepts that would help in retrieving relevant medical information:
-        
-        User Query: {query}
-        
-        Expand the query only if you feel like it is required, otherwise keep the user query intact.
-        Be specific to the medical or any other domain mentioned in the ueer query, do not add other medical domains.
-        If the user query asks about answering in tabular format, include that in the expanded query and do not answer in tabular format yourself.
-        Provide only the expanded query without explanations.
-        """
-        expansion = self.model.invoke(prompt)
-        
-        return expansion
+        from langchain_core.messages import AIMessage
+        return AIMessage(content=query)

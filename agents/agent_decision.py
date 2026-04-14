@@ -140,18 +140,19 @@ def create_agent_graph():
         
         # Check input through guardrails if text is present
         if input_text:
-            is_allowed, message = guardrails.check_input(input_text)
-            if not is_allowed:
-                # If input is blocked, return early with guardrail message
-                print(f"Selected agent: INPUT GUARDRAILS, Message: ", message)
-                return {
-                    **state,
-                    "messages": message,
-                    "agent_name": "INPUT_GUARDRAILS",
-                    "has_image": False,
-                    "image_type": None,
-                    "bypass_routing": True  # flag to end flow
-                }
+            pass
+            # is_allowed, message = guardrails.check_input(input_text)
+            # if not is_allowed:
+            #     # If input is blocked, return early with guardrail message
+            #     print(f"Selected agent: INPUT GUARDRAILS, Message: ", message)
+            #     return {
+            #         **state,
+            #         "messages": message,
+            #         "agent_name": "INPUT_GUARDRAILS",
+            #         "has_image": False,
+            #         "image_type": None,
+            #         "bypass_routing": True  # flag to end flow
+            #     }
         
         # Original image processing code
         if isinstance(current_input, dict) and "image" in current_input:
@@ -583,8 +584,8 @@ def create_agent_graph():
             input_text = current_input.get("text", "")
         
         # Apply output sanitization
-        sanitized_output = guardrails.check_output(output_text, input_text)
-        # sanitized_output = output_text
+        # sanitized_output = guardrails.check_output(output_text, input_text)
+        sanitized_output = output_text
         
         # For non-validation cases, add the sanitized output to messages
         sanitized_message = AIMessage(content=sanitized_output) if isinstance(output, AIMessage) else sanitized_output

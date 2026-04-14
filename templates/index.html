@@ -263,31 +263,40 @@
                     </div>
                     <div class="agent-info">
                         <h6>Agent Capabilities</h6>
-                        <ul class="list-unstyled">
+                        <ul class="list-unstyled" id="agent-capabilities-list">
                             <li><strong>Medical RAG Agent:</strong>
                                 <ul>
-                                    <li>Docling based parsing to extract text, tables, and images from PDFs</li>
-                                    <li>Embedding markdown formatted text, tables and LLM based image summaries</li>
-                                    <li>LLM based semantic chunking with structural boundaries</li>
-                                    <li>LLM based query expansion with related medical terms</li>
-                                    <li>Qdrant Vector DB hybrid search</li>
-                                    <li>Input-output guardrails for safe responses</li>
-                                    <li>Confidence-based handoff to Web Search to prevent hallucinations</li>
+                                    <li class="med-rag-cap1">Lightweight PDF parsing using PyPDFLoader</li>
+                                    <li class="med-rag-cap2">Embedding extracted text directly</li>
+                                    <li class="med-rag-cap3">Semantic chunking (RecursiveCharacterTextSplitter)</li>
+                                    <li class="med-rag-cap4">Qdrant Vector DB hybrid search</li>
+                                </ul>
+                            </li>
+                            <li><strong>Web Search Agent:</strong>
+                                <ul>
+                                    <li class="web-cap1">Real-time Tavily search</li>
+                                    <li class="web-cap2">Reliable medical sources filtering</li>
+                                </ul>
+                            </li>
+                            <li><strong>Computer Vision Agents:</strong>
+                                <ul>
+                                    <li class="cv-cap1">Lesion detection & classification</li>
+                                    <li class="cv-cap2">PyTorch based inference</li>
                                 </ul>
                             </li>
                             <li><strong>Human-in-the-loop Verification:</strong>
                                 <ul>
-                                    <li>Human verification for CV agents</li>
+                                    <li class="human-val-cap">Human verification for CV agents</li>
                                 </ul>
                             </li>
                         </ul>
                     </div>
                     <div class="agent-info">
                         <h6>Multi-Agent Orchestration</h6>
-                        <ul class="list-unstyled">
-                            <li><i class="fas fa-project-diagram me-2"></i> Coordinated interaction between agents</li>
-                            <li><i class="fas fa-tasks me-2"></i> Dynamic task allocation based on capabilities</li>
-                            <li><i class="fas fa-sync-alt me-2"></i> Seamless integration of agent responses</li>
+                        <ul class="list-unstyled" id="orchestration-list">
+                            <li><i class="fas fa-project-diagram me-2"></i> <span class="orch-cap1">Coordinated interaction between agents</span></li>
+                            <li><i class="fas fa-tasks me-2"></i> <span class="orch-cap2">Dynamic task allocation based on capabilities</span></li>
+                            <li><i class="fas fa-sync-alt me-2"></i> <span class="orch-cap3">Seamless integration of agent responses</span></li>
                         </ul>
                     </div>
                     <button id="clear-chat" class="btn btn-outline-danger w-100 mt-3">
@@ -1029,15 +1038,20 @@
                 'availAgents': 'Available Agents',
                 'agentCaps': 'Agent Capabilities',
                 'autoRoute': 'Auto-Route (Recommended)',
-                'medRagCap1': 'Docling based parsing',
-                'medRagCap2': 'Embedding text & tables',
-                'medRagCap3': 'LLM based semantic chunking',
-                'medRagCap4': 'Preserving structural boundaries',
+                'medRagCap1': 'Lightweight PDF parsing using PyPDFLoader',
+                'medRagCap2': 'Embedding extracted text directly',
+                'medRagCap3': 'Semantic chunking (RecursiveCharacterTextSplitter)',
+                'medRagCap4': 'Qdrant Vector DB hybrid search',
                 'webCap1': 'Real-time Tavily search',
-                'webCap2': 'Reliable medical sources',
+                'webCap2': 'Reliable medical sources filtering',
                 'cvCap1': 'Lesion detection & classification',
                 'cvCap2': 'PyTorch based inference',
                 'cvCap3': 'Medical image processing',
+                'humanValCap': 'Human verification for CV agents',
+                'orchTitle': 'Multi-Agent Orchestration',
+                'orchCap1': 'Coordinated interaction between agents',
+                'orchCap2': 'Dynamic task allocation based on capabilities',
+                'orchCap3': 'Seamless integration of agent responses',
                 'medConvAgent': 'Medical Conversation Agent',
                 'medRagAgent': 'Medical RAG Agent',
                 'webSearchAgent': 'Web Search Agent',
@@ -1069,15 +1083,20 @@
                 'availAgents': '可用智能体',
                 'agentCaps': '智能体能力',
                 'autoRoute': '自动路由 (推荐)',
-                'medRagCap1': '基于 Docling 的解析',
-                'medRagCap2': '文本表格嵌入',
-                'medRagCap3': '基于 LLM 的语义分块',
-                'medRagCap4': '结构化边界保留',
-                'webCap1': '实时 Tavily 搜索',
-                'webCap2': '可靠医学来源筛选',
-                'cvCap1': '病灶检测与分类',
-                'cvCap2': '基于 PyTorch 的推理',
+                'medRagCap1': '基于 PyPDFLoader 的极速 PDF 解析',
+                'medRagCap2': '提取文本直接向量化',
+                'medRagCap3': '语义文本分块 (RecursiveCharacterTextSplitter)',
+                'medRagCap4': 'Qdrant 向量数据库混合搜索',
+                'webCap1': '基于 Tavily 的实时网络搜索',
+                'webCap2': '可靠医学文献及信息过滤',
+                'cvCap1': '医学病灶检测与分类',
+                'cvCap2': '基于 PyTorch 的深度学习推理',
                 'cvCap3': '医学图像处理',
+                'humanValCap': '针对计算机视觉的人工验证（HITL）',
+                'orchTitle': '多智能体编排系统',
+                'orchCap1': '智能体之间的协调交互与流转',
+                'orchCap2': '基于能力的动态任务分配与路由',
+                'orchCap3': '无缝整合多个智能体的响应结果',
                 'medConvAgent': '医疗对话智能体',
                 'medRagAgent': '医疗知识检索智能体 (RAG)',
                 'webSearchAgent': '网络搜索智能体',
@@ -1134,6 +1153,40 @@
                     listItems[5].innerHTML = `<i class="fas fa-lungs me-2"></i> ${t.chestXray}`;
                     listItems[6].innerHTML = `<i class="fas fa-allergies me-2"></i> ${t.skinLesion}`;
                 }
+                
+                // Capabilities Update
+                const capList = document.getElementById('agent-capabilities-list');
+                if (capList) {
+                    const titles = capList.querySelectorAll('strong');
+                    if (titles.length >= 4) {
+                        titles[0].innerText = t.medRagAgent + ':';
+                        titles[1].innerText = t.webSearchAgent + ':';
+                        titles[2].innerText = t.cvAgents + ':';
+                        titles[3].innerText = t.humanValCap.split(' ')[0] + ':'; // Fallback
+                    }
+                    const medRag1 = capList.querySelector('.med-rag-cap1'); if(medRag1) medRag1.innerText = t.medRagCap1;
+                    const medRag2 = capList.querySelector('.med-rag-cap2'); if(medRag2) medRag2.innerText = t.medRagCap2;
+                    const medRag3 = capList.querySelector('.med-rag-cap3'); if(medRag3) medRag3.innerText = t.medRagCap3;
+                    const medRag4 = capList.querySelector('.med-rag-cap4'); if(medRag4) medRag4.innerText = t.medRagCap4;
+                    
+                    const web1 = capList.querySelector('.web-cap1'); if(web1) web1.innerText = t.webCap1;
+                    const web2 = capList.querySelector('.web-cap2'); if(web2) web2.innerText = t.webCap2;
+                    
+                    const cv1 = capList.querySelector('.cv-cap1'); if(cv1) cv1.innerText = t.cvCap1;
+                    const cv2 = capList.querySelector('.cv-cap2'); if(cv2) cv2.innerText = t.cvCap2;
+                    
+                    const humanVal = capList.querySelector('.human-val-cap'); if(humanVal) humanVal.innerText = t.humanValCap;
+                }
+
+                // Orchestration Update
+                const orchInfo = document.querySelectorAll('.agent-info')[3];
+                if(orchInfo) {
+                    const orchTitle = orchInfo.querySelector('h6');
+                    if(orchTitle) orchTitle.innerText = t.orchTitle;
+                }
+                const orchCap1 = document.querySelector('.orch-cap1'); if(orchCap1) orchCap1.innerText = t.orchCap1;
+                const orchCap2 = document.querySelector('.orch-cap2'); if(orchCap2) orchCap2.innerText = t.orchCap2;
+                const orchCap3 = document.querySelector('.orch-cap3'); if(orchCap3) orchCap3.innerText = t.orchCap3;
             }
             
             document.getElementById('clear-chat').innerHTML = `<i class="fas fa-trash me-2"></i> ${t.clearConv}`;
